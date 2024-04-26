@@ -2,7 +2,7 @@ package com.eterio.postman.alt.model.entity;
 
 
 import com.eterio.postman.alt.model.common.Audit;
-import com.eterio.postman.alt.model.common.LifeCycle;
+import com.eterio.postman.alt.model.common.StatusLifeCycle;
 import com.eterio.postman.alt.model.enums.ProfileType;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
@@ -23,6 +23,6 @@ public class ProfileEntity {
     private String password;
     private ProfileType profileType;
     private String passwordResetKey;
-    private List<LifeCycle> lifeCycles = new ArrayList<>();
+    private List<StatusLifeCycle> lifeCycles = new ArrayList<>();
     private Audit audit;
 }

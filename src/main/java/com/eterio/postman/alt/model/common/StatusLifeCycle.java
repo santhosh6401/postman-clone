@@ -5,7 +5,8 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
-public class LifeCycle {
-    private String statusDescription;
+public class StatusLifeCycle {
+    private String status;
+    private String createdBy;
     private LocalDateTime createdOn;
 }
