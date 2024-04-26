@@ -16,8 +16,8 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class WorkspaceController {
 
-    @Autowired
-    WorkspaceService workspaceService;
+
+    private final WorkspaceService workspaceService;
 
     @PostMapping("/create")
     public WorkspaceCreateResponse createWorkspace(@RequestHeader String clientToken,
