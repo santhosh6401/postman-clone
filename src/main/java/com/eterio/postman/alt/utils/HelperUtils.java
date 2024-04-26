@@ -1,8 +1,11 @@
 package com.eterio.postman.alt.utils;
 
+import com.eterio.postman.alt.model.collection.Collection;
 import com.eterio.postman.alt.model.common.Audit;
 import com.eterio.postman.alt.model.common.StatusLifeCycle;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -48,4 +51,10 @@ public class HelperUtils {
         return statusLifeCycles;
     }
 
+
+    @SneakyThrows
+    public Collection jsonStringToCollectionModel(String jsonString){
+        ObjectMapper mapper = new ObjectMapper();
+        return mapper.readValue(jsonString , Collection.class);
+    }
 }

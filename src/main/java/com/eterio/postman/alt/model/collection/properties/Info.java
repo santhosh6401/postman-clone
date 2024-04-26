@@ -1,4 +1,4 @@
-package com.eterio.postman.alt.model.collection;
+package com.eterio.postman.alt.model.collection.properties;
 
 import lombok.Data;
 
