@@ -2,6 +2,7 @@ package com.eterio.postman.alt.model.entity;
 
 
 import com.eterio.postman.alt.model.common.Audit;
+import com.eterio.postman.alt.model.common.IdName;
 import com.eterio.postman.alt.model.common.StatusLifeCycle;
 import com.eterio.postman.alt.model.enums.ProfileType;
 import lombok.Data;
@@ -19,10 +20,7 @@ public class ProfileEntity {
     private String firstName;
     private String lastName;
     private String email;
-    private String phoneNo;
     private String password;
-    private ProfileType profileType;
-    private String passwordResetKey;
-    private List<StatusLifeCycle> lifeCycles = new ArrayList<>();
+    private List<IdName> workspaces = new ArrayList<>();
     private Audit audit;
 }

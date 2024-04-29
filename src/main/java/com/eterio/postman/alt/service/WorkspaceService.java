@@ -1,4 +1,4 @@
-package com.eterio.postman.alt.service.workspace;
+package com.eterio.postman.alt.service;
 
 import com.eterio.postman.alt.model.request.workspace.*;
 import com.eterio.postman.alt.model.response.workspace.*;

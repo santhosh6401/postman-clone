@@ -1,10 +1,10 @@
-package com.eterio.postman.alt.service.workspace.workserviceImpl;
+package com.eterio.postman.alt.service.implementation;
 
 import com.eterio.postman.alt.model.entity.WorkspaceEntity;
 import com.eterio.postman.alt.model.request.workspace.*;
 import com.eterio.postman.alt.model.response.workspace.*;
 import com.eterio.postman.alt.repository.WorkspaceRepository;
-import com.eterio.postman.alt.service.workspace.WorkspaceService;
+import com.eterio.postman.alt.service.WorkspaceService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
