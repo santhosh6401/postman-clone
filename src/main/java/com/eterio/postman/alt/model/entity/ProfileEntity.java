@@ -3,8 +3,6 @@ package com.eterio.postman.alt.model.entity;
 
 import com.eterio.postman.alt.model.common.Audit;
 import com.eterio.postman.alt.model.common.IdName;
-import com.eterio.postman.alt.model.common.StatusLifeCycle;
-import com.eterio.postman.alt.model.enums.ProfileType;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;

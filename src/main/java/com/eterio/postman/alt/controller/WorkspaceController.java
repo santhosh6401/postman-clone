@@ -8,54 +8,55 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
-@Api(tags = "Workspace Management", value = "Workspace Management")
+@Api(tags = "Workspace API", value = "Workspace API")
 @Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/workspace")
-public class WorkspaceController {
-
+public class WorkspaceController {              // TODO client token validation ...
 
     private final WorkspaceService workspaceService;
 
+
     @PostMapping("/create")
-    public WorkspaceCreateResponse createWorkspace(@RequestHeader String clientToken,
+    public WorkspaceCreateResponse createWorkspace(@RequestHeader String uniqueInteractionId,
+                                                   @RequestHeader String clientToken,
                                                    @RequestBody WorkspaceCreateRequest request) {
-        log.info("Create Workspace for this user {}", request.getName());
-        WorkspaceCreateResponse response = workspaceService.createWorkspace(request);
-        return response;
+        log.info("interactionId :: [{}] create workspace for this user {}", uniqueInteractionId, request.getName());
+        return workspaceService.createWorkspace(request, uniqueInteractionId);
     }
 
     @PutMapping("/edit")
-    public WorkspaceEditResponse updateWorkspace(@RequestHeader String clientToken,
+    public WorkspaceEditResponse updateWorkspace(@RequestHeader String uniqueInteractionId,
+                                                 @RequestHeader String clientToken,
                                                  @RequestBody WorkspaceEditRequest request) {
-        log.info("Update Workspace for this user {}", request.getName());
-        WorkspaceEditResponse response = workspaceService.updateWorkspace(request);
-        return response;
-
+        log.info("interactionId :: [{}] update the workspace : {} ", uniqueInteractionId, request.getName());
+        return workspaceService.updateWorkspace(request, uniqueInteractionId);
     }
 
     @GetMapping("/get")
-    public WorkspaceGetResponse getWorkspace(@RequestHeader String clientToken,
+    public WorkspaceGetResponse getWorkspace(@RequestHeader String uniqueInteractionId,
+                                             @RequestHeader String clientToken,
                                              @RequestBody WorkspaceGetRequest request) {
-        log.info("Get {} Workspace with {} access", request.getName(), request.getType());
-        WorkspaceGetResponse response = workspaceService.getWorkspace(request);
-        return response;
+        log.info("interactionId : [{}] get {} workspace with {} access", uniqueInteractionId, request.getName(), request.getType());
+        return workspaceService.getWorkspace(request, uniqueInteractionId);
+
     }
 
     @PostMapping("/add")
-    public WorkspaceAddResponse addWorkspace(@RequestHeader String clientToken,
+    public WorkspaceAddResponse addWorkspace(@RequestHeader String uniqueInteractionId,
+                                             @RequestHeader String clientToken,
                                              @RequestBody WorkspaceAddRequest request) {
-        WorkspaceAddResponse response = workspaceService.addWorkspace(request);
-        return response;
+        log.info("interactionId : [{}] add workspace", uniqueInteractionId);
+        return workspaceService.addWorkspace(request, uniqueInteractionId);
     }
 
     @DeleteMapping("/delete")
-    public WorkspaceDeleteResponse deleteWorkspace(@RequestHeader String clientToken,
+    public WorkspaceDeleteResponse deleteWorkspace(@RequestHeader String uniqueInteractionId,
+                                                   @RequestHeader String clientToken,
                                                    @RequestBody WorkspaceDeleteRequest request) {
-        log.info("Delete workspace for {}", request.getWorkspaceId());
-        WorkspaceDeleteResponse response = workspaceService.deleteWorkspace(request);
-        return response;
+        log.info("interactionId :: [{}] delete workspace for {}", uniqueInteractionId, request.getWorkspaceId());
+        return workspaceService.deleteWorkspace(request, uniqueInteractionId);
     }
 
 

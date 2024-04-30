@@ -7,9 +7,12 @@ import com.eterio.postman.alt.model.entity.CollectionEntity;
 import com.eterio.postman.alt.repository.CollectionRepository;
 import com.eterio.postman.alt.service.CollectionService;
 import com.eterio.postman.alt.utils.HelperUtils;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -18,6 +21,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Objects;
+import java.util.Optional;
 
 import static com.eterio.postman.alt.constant.AppConstant.FAILED;
 import static com.eterio.postman.alt.constant.AppConstant.SUCCESS;
@@ -65,13 +69,13 @@ public class CollectionServiceImpl implements CollectionService {
                         .description("something went wrong in import... :)")
                         .build();
 
-            BeanUtils.copyProperties(collection,entity);
+            BeanUtils.copyProperties(collection, entity);
             entity.setCollectionId(helperUtils.generateId("CI"));
             entity.setWorkspaceId(workspaceId);
             String name = Objects.nonNull(collection.getInfo()) && Objects.nonNull(collection.getInfo().getName()) ? collection.getInfo().getName() : "No Name";
             entity.setName(name);
             entity.setAudit(helperUtils.createAudit(uniqueInteractionId));  // TODO :: unique interaction is a specific format with user name and mobile
-            entity.setStatusLifeCycle(helperUtils.upsertLifeCycles("import the new collection" , new ArrayList<>()));
+            entity.setStatusLifeCycle(helperUtils.upsertLifeCycles("import the new collection", new ArrayList<>()));
 
             repository.save(entity);
 
@@ -87,6 +91,24 @@ public class CollectionServiceImpl implements CollectionService {
                     .response(FAILED)
                     .description("failed because of " + e.getMessage())
                     .build();
+        }
+    }
+
+    @Override
+    public Collection export(String uniqueInteractionId, String workspaceId, String collectionId) {
+
+        try {
+            Optional<CollectionEntity> entityOptional = repository.findByCollectionIdAndWorkspaceId(collectionId, workspaceId);
+            if (entityOptional.isPresent()) {
+                CollectionEntity collectionEntity = entityOptional.get();
+                Collection collection = new Collection();
+                BeanUtils.copyProperties(collectionEntity, collection);
+                return collection;
+            } else
+                return null;
+        } catch (Exception ex) {
+            log.error("interactionId : [{}] :: errorMsg : {} ", uniqueInteractionId, ex.getMessage());
+            throw ex;
         }
     }
 }

@@ -7,9 +7,9 @@ import org.springframework.stereotype.Service;
 @Service
 public interface WorkspaceService {
 
-    public WorkspaceCreateResponse createWorkspace(WorkspaceCreateRequest request);
-    public WorkspaceEditResponse updateWorkspace(WorkspaceEditRequest request);
-    public WorkspaceGetResponse getWorkspace(WorkspaceGetRequest request);
-    public WorkspaceDeleteResponse deleteWorkspace(WorkspaceDeleteRequest request);
-    public WorkspaceAddResponse addWorkspace(WorkspaceAddRequest request);
+    public WorkspaceCreateResponse createWorkspace(WorkspaceCreateRequest request, String uniqueInteractionId);
+    public WorkspaceEditResponse updateWorkspace(WorkspaceEditRequest request, String uniqueInteractionId);
+    public WorkspaceGetResponse getWorkspace(WorkspaceGetRequest request, String uniqueInteractionId);
+    public WorkspaceDeleteResponse deleteWorkspace(WorkspaceDeleteRequest request, String uniqueInteractionId);
+    public WorkspaceAddResponse addWorkspace(WorkspaceAddRequest request, String uniqueInteractionId);
 }

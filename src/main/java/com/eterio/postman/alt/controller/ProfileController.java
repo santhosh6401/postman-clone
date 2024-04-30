@@ -7,7 +7,6 @@ import com.eterio.postman.alt.service.ProfileService;
 import io.swagger.annotations.Api;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 
 @Api(tags = "Profile Management", value = "Profile Management")
@@ -21,7 +20,7 @@ public class ProfileController {
     @PostMapping("/signup")
     public ProfileSignupResponse profileSignup(@RequestHeader String interactionId,
                                                @RequestBody ProfileSignupRequest request) {
-        ProfileSignupResponse response = profileService.profileSignup(interactionId,request);
+        ProfileSignupResponse response = profileService.profileSignup(interactionId, request);
         return response;
 
     }
@@ -30,8 +29,8 @@ public class ProfileController {
     public ProfileSigninResponse profileSignin(@RequestHeader String interactionId,
                                                @RequestHeader String email,
                                                @RequestHeader String password) {
-    ProfileSigninResponse response = profileService.profileSignin(email, password);
-    return response;
+        ProfileSigninResponse response = profileService.profileSignin(email, password);
+        return response;
     }
 
     @GetMapping("/get-profile")
@@ -40,23 +39,23 @@ public class ProfileController {
                                          @RequestHeader String email,
                                          @RequestHeader int page,
                                          @RequestHeader int size) {
-    GetProfileResponse response= profileService.getProfile(clientToken, email, page, size);
-    return response;
+        GetProfileResponse response = profileService.getProfile(clientToken, email, page, size);
+        return response;
     }
 
     @PostMapping("/dashboard")
     public ProfileDashboardResponse dashboard(@RequestHeader String interactionId,
-                                                    @RequestHeader String clientToken,
-                                                    @RequestHeader int page,
-                                                    @RequestHeader int size) {
-    ProfileDashboardResponse response = profileService.dashboard(clientToken, page, size);
-    return response;
+                                              @RequestHeader String clientToken,
+                                              @RequestHeader int page,
+                                              @RequestHeader int size) {
+        ProfileDashboardResponse response = profileService.dashboard(clientToken, page, size);
+        return response;
     }
 
     @PostMapping("/approve")
     public ApproveWorkspaceResponse approveWorkspace(@RequestHeader String interactionId,
                                                      @RequestBody ApproveWorkspaceRequest request) {
-    ApproveWorkspaceResponse response= profileService.approveWorkspace(request);
-    return response;
+        ApproveWorkspaceResponse response = profileService.approveWorkspace(request);
+        return response;
     }
 }
