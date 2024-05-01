@@ -19,6 +19,6 @@ public class ProfileEntity {
     private String lastName;
     private String email;
     private String password;
-    private List<IdName> workspaces = new ArrayList<>();
+    private String gitLabAccessToken;
     private Audit audit;
 }

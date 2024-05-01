@@ -1,26 +1,26 @@
 package com.eterio.postman.alt.service.implementation;
 
-import com.eterio.postman.alt.model.common.IdName;
 import com.eterio.postman.alt.model.entity.ProfileEntity;
-import com.eterio.postman.alt.model.entity.WorkspaceEntity;
-import com.eterio.postman.alt.model.request.profile.ApproveWorkspaceRequest;
 import com.eterio.postman.alt.model.request.profile.ProfileSignupRequest;
-import com.eterio.postman.alt.model.response.profile.*;
+import com.eterio.postman.alt.model.response.profile.GetProfile;
+import com.eterio.postman.alt.model.response.profile.GetProfileResponse;
+import com.eterio.postman.alt.model.response.profile.ProfileSigninResponse;
+import com.eterio.postman.alt.model.response.profile.ProfileSignupResponse;
 import com.eterio.postman.alt.repository.ProfileRepository;
-import com.eterio.postman.alt.repository.WorkspaceRepository;
 import com.eterio.postman.alt.service.ProfileService;
+import com.eterio.postman.alt.utils.GenerateAndValidateToken;
 import com.eterio.postman.alt.utils.HelperUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
-import org.springframework.util.ObjectUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import static com.eterio.postman.alt.constant.AppConstant.FAILED;
@@ -33,7 +33,9 @@ public class ProfileServiceImpl implements ProfileService {
 
     private final HelperUtils helperUtils;
     private final ProfileRepository profileRepository;
-    private final WorkspaceRepository workspaceRepository;
+    private final MongoTemplate mongoTemplate;
+
+    private final GenerateAndValidateToken tokenService;
 
     @Override
     public ProfileSignupResponse profileSignup(String interactionId, ProfileSignupRequest request) {
@@ -41,30 +43,44 @@ public class ProfileServiceImpl implements ProfileService {
         ProfileEntity entity = new ProfileEntity();
         ProfileSignupResponse response = new ProfileSignupResponse();
 
+        Optional<ProfileEntity> profileEntity = profileRepository.findByEmail(request.getEmail());
+
+        if (profileEntity.isPresent()) {
+            response.setResponse(FAILED);
+            response.setDescription("sign-up failed already profile exist for this email-id");
+            return response;
+        }
+
+
         entity.setProfileId(helperUtils.generateId("PR"));
         entity.setEmail(request.getEmail());
         entity.setFirstName(request.getFirstName());
         entity.setLastName(request.getLastName());
-        entity.setPassword(request.getPassword());
+        entity.setPassword(helperUtils.encode(request.getPassword()));
+        entity.setGitLabAccessToken(helperUtils.encode(request.getGitLabAccessToken()));
+
         entity.setAudit(helperUtils.createAudit(interactionId));
         profileRepository.save(entity);
 
         BeanUtils.copyProperties(entity, response);
-        //need to prepare clientToken
-        response.setClientToken("");
-        //need to call the create workspace
+
+        response.setClientToken(tokenService.generateToken(entity.getFirstName(), entity.getLastName(), entity.getEmail(), entity.getProfileId()));
+
+        response.setResponse(SUCCESS);
+        response.setDescription("sign-up successfully");
+
         return response;
     }
 
     @Override
-    public ProfileSigninResponse profileSignin(String email, String password) {
-        Optional<ProfileEntity> entity = profileRepository.findByEmailAndPassword(email, password);
+    public ProfileSigninResponse profileSignIn(String interactionId, String email, String password) {
+        Optional<ProfileEntity> entityOptional = profileRepository.findByEmailAndPassword(email, helperUtils.encode(password));
         ProfileSigninResponse response = new ProfileSigninResponse();
-        if (entity.isPresent()) {
-            //need to prepare clent token
-            response.setClientToken("");
+        if (entityOptional.isPresent()) {
+            ProfileEntity entity = entityOptional.get();
+            response.setClientToken(tokenService.generateToken(entity.getFirstName(), entity.getLastName(), entity.getEmail(), entity.getProfileId()));
             response.setResponse(SUCCESS);
-            response.setDescription("signin successfully");
+            response.setDescription("sign-in successfully");
         } else {
             response.setResponse(FAILED);
             response.setDescription("profile not found");
@@ -73,122 +89,76 @@ public class ProfileServiceImpl implements ProfileService {
     }
 
     @Override
-    public GetProfileResponse getProfile(String clientToken, String email, int page, int size) {
+    public GetProfileResponse getProfile(String interactionId, String profileId, String email) {
+
         GetProfileResponse response = new GetProfileResponse();
-        List<GetProfile> getProfileList = new ArrayList<>();
-        GetProfile getProfile = new GetProfile();
-        if (ObjectUtils.isEmpty(email) && !ObjectUtils.isEmpty(clientToken)) {
-            //TODO need to extract client token
-            Optional<ProfileEntity> entity = profileRepository.findByProfileId(""); //TODO need to pass profile id extracted from client token
-            if (entity.isPresent()) {
-                getProfile.setEmail(entity.get().getEmail());
-                getProfile.setFirstName(entity.get().getFirstName());
-                getProfile.setLastName(entity.get().getLastName());
-//            getProfile.setWorkspaces("");   TODO need to integrate for this field
-                getProfileList.add(getProfile);
-                response.setProfiles(getProfileList);
-                response.setResponse(SUCCESS);
-                response.setDescription("profile retrieved successfully");
-            } else {
-                response.setResponse(FAILED);
-                response.setDescription("profile not found");
-            }
-        } else if ((!ObjectUtils.isEmpty(email) && ObjectUtils.isEmpty(clientToken)) ||
-                (!ObjectUtils.isEmpty(email) && !ObjectUtils.isEmpty(clientToken))) {
-            Optional<ProfileEntity> entity = profileRepository.findByEmail(email);
-            if (entity.isPresent()) {
-                getProfile.setEmail(entity.get().getEmail());
-                getProfile.setFirstName(entity.get().getFirstName());
-                getProfile.setLastName(entity.get().getLastName());
-//            getProfile.setWorkspaces("");   TODO need to integrate for this field
-                getProfileList.add(getProfile);
-                response.setProfiles(getProfileList);
-                response.setResponse(SUCCESS);
-                response.setDescription("profile retrieved successfully");
-            } else {
-                response.setResponse(FAILED);
-                response.setDescription("profile not found");
-            }
-        } else {
-            List<ProfileEntity> profileEntityList = profileRepository.findAll();
-            if (!ObjectUtils.isEmpty(profileEntityList)) {
-                for (ProfileEntity entity : profileEntityList) {
-                    getProfile.setEmail(entity.getEmail());
-                    getProfile.setFirstName(entity.getFirstName());
-                    getProfile.setLastName(entity.getLastName());
-//            getProfile.setWorkspaces("");   TODO need to integrate for this field
-                    getProfileList.add(getProfile);
-                }
-                int fromIndex = (page - 1) * size;
-                int toIndex = Math.min(fromIndex + size, getProfileList.size());
-                boolean hasNextPage = ((page + 1) * size) < getProfileList.size();
-                boolean hasPreviousPage = page > 0;
-                response.setProfiles(getProfileList.subList(fromIndex, toIndex));
-                response.setHasNext(hasNextPage);
-                response.setHasPrevious(hasPreviousPage);
-                response.setResponse(SUCCESS);
-                response.setDescription("profile retrieved successfully");
-            } else {
-                response.setResponse(FAILED);
-                response.setDescription("profile not found ");
-            }
-        }
-        return response;
-    }
 
-    @Override
-    public ProfileDashboardResponse dashboard(String clientToken, int page, int size) {
+        Query query = new Query();
 
-        //TODO need to extract client token to get profileId
-        ProfileDashboardResponse response = new ProfileDashboardResponse();
-        Pageable pageable = PageRequest.of(page, size);
-        Optional<ProfileEntity> entity = profileRepository.findByProfileId("");
-        if (entity.isPresent()) {
-            response.setFirstName(entity.get().getFirstName());
-            response.setLastName(entity.get().getLastName());
-            response.setEmail(entity.get().getEmail());
-            int fromIndex = (page - 1) * size;
-            int toIndex = Math.min(fromIndex + size, entity.get().getWorkspaces().size());
-            boolean hasNextPage = ((page + 1) * size) < entity.get().getWorkspaces().size();
-            boolean hasPreviousPage = page > 0;
-            response.setWorkspaces(entity.get().getWorkspaces().subList(fromIndex, toIndex));
-            response.setHasNext(hasNextPage);
-            response.setHasPrevious(hasPreviousPage);
+        if (Objects.nonNull(email))
+            query.addCriteria(Criteria.where("email").is(email));
+
+        if (Objects.nonNull(profileId) && Objects.isNull(email))
+            query.addCriteria(Criteria.where("profileId").is(profileId));
+
+
+        List<ProfileEntity> profileEntities = mongoTemplate.find(query, ProfileEntity.class);
+
+        if (!profileEntities.isEmpty()) {
+            List<GetProfile> profileList = new ArrayList<>();
+
+            for (ProfileEntity entity : profileEntities) {
+                GetProfile profile = new GetProfile();
+                BeanUtils.copyProperties(entity, profile);
+                profileList.add(profile);
+            }
+
+            response.setProfiles(profileList);
             response.setResponse(SUCCESS);
-            response.setDescription("workspace retrieved successfully");
-
+            response.setDescription("get the profiles successfully ...");
         } else {
             response.setResponse(FAILED);
-            response.setDescription("profile not found");
+            response.setDescription("no profile found ...");
         }
+
         return response;
     }
 
     @Override
-    public ApproveWorkspaceResponse approveWorkspace(ApproveWorkspaceRequest request) {
-        ApproveWorkspaceResponse response = new ApproveWorkspaceResponse();
-        //TODO need to extract client token
-        Optional<ProfileEntity> optionalProfile = profileRepository.findByProfileId("");
-        Optional<WorkspaceEntity> optionalWorkspace = workspaceRepository.findByWorkspaceId(request.getWorkspaceId());
+    public ProfileSignupResponse updateProfile(String interactionId, String profileId, ProfileSignupRequest request) {
+        ProfileSignupResponse response = new ProfileSignupResponse();
 
-        if (optionalProfile.isPresent() && optionalWorkspace.isPresent()) {
-            if (optionalProfile.get().getProfileId().equalsIgnoreCase(optionalWorkspace.get().getCreator())) {
-                IdName idName = new IdName();
-                idName.setId(request.getApproverId());
-                idName.setName(optionalWorkspace.get().getName());
-                optionalProfile.get().getWorkspaces().add(idName);
-                profileRepository.save(optionalProfile.get());
-                response.setResponse(SUCCESS);
-                response.setDescription("workspace added to the profile");
-            } else {
-                response.setResponse(FAILED);
-                response.setDescription("creator profile not match");
-            }
-        } else {
+        Optional<ProfileEntity> entityOptional = profileRepository.findByProfileId(profileId);
+
+        if (entityOptional.isEmpty()) {
             response.setResponse(FAILED);
-            response.setDescription("profile not found");
+            response.setDescription("profile not found .... :( ");
+            return response;
         }
+
+        ProfileEntity entity = entityOptional.get();
+
+        if (Objects.nonNull(request.getEmail()))
+            entity.setEmail(request.getEmail());
+        if (Objects.nonNull(request.getFirstName()))
+            entity.setFirstName(request.getFirstName());
+        if (Objects.nonNull(request.getLastName()))
+            entity.setLastName(request.getLastName());
+        if (Objects.nonNull(request.getPassword()))
+            entity.setPassword(helperUtils.encode(request.getPassword()));
+        if (Objects.nonNull(request.getGitLabAccessToken()))
+            entity.setGitLabAccessToken(helperUtils.encode(request.getGitLabAccessToken()));
+
+        entity.setAudit(helperUtils.createAudit(interactionId));
+        profileRepository.save(entity);
+
+        BeanUtils.copyProperties(entity, response);
+        response.setResponse(SUCCESS);
+        response.setDescription("profile updated successfully .... :) ");
+        response.setClientToken(tokenService.generateToken(entity.getFirstName(), entity.getLastName(), entity.getEmail(), entity.getProfileId()));
 
         return response;
     }
+
+
 }
