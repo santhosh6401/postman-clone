@@ -5,6 +5,7 @@ import lombok.Data;
 
 @Data
 public class CollectionResponse extends CommonResponse {
+    private String collectionId;
     private String name;
     private String projectId;
     private String creator;
