@@ -1,14 +1,24 @@
 package com.eterio.postman.alt.service;
 
-import com.eterio.postman.alt.model.collection.Collection;
-import com.eterio.postman.alt.model.collection.response.CollectionResponse;
-import com.eterio.postman.alt.model.common.CommonResponse;
+import com.eterio.postman.alt.model.request.collection.CollectionRequest;
+import com.eterio.postman.alt.model.response.CommonResponse;
+import com.eterio.postman.alt.model.response.collection.CollectionResponse;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import org.gitlab4j.api.GitLabApiException;
+import org.gitlab4j.api.models.RepositoryFile;
 import org.springframework.core.io.ByteArrayResource;
-import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 public interface CollectionService {
-    CollectionResponse importCollection(String uniqueInteractionId, String workspaceId, MultipartFile file);
+    RepositoryFile importCollection(String projectId, String collectionId , String version ,String profileId , String uniqueInteractionId) throws GitLabApiException;
 
-    Collection export(String uniqueInteractionId, String workspaceId, String collectionId) throws JsonProcessingException;
+
+    CollectionResponse createCollection(CollectionRequest request, String uniqueInteractionId, String profileId);
+
+    CollectionResponse updateCollection(CollectionRequest request, String collectionId, String uniqueInteractionId);
+
+    CommonResponse deleteCollection(String collectionId, String uniqueInteractionId, String profileId);
+
+    List<CollectionResponse> getCollection(String projectId, String collectionId, String version, String name, String uniqueInteractionId);
 }

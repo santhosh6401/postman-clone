@@ -1,6 +1,6 @@
 package com.eterio.postman.alt.utils;
 
-import com.eterio.postman.alt.model.collection.Collection;
+import com.eterio.postman.alt.model.postmancollectionmodel.Collection;
 import com.eterio.postman.alt.model.common.Audit;
 import com.eterio.postman.alt.model.common.StatusLifeCycle;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -9,15 +9,18 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class HelperUtils {
+
 
     public String generateId(String prefix) {
         return prefix + Instant.now().toEpochMilli();
@@ -57,4 +60,16 @@ public class HelperUtils {
         ObjectMapper mapper = new ObjectMapper();
         return mapper.readValue(jsonString , Collection.class);
     }
+
+
+    public String encode(String value) {
+        return Base64.getEncoder().encodeToString(value.getBytes(StandardCharsets.UTF_8));
+    }
+
+
+    public String decode(String value){
+        byte[] decodedBytes = Base64.getDecoder().decode(value);
+        return new String(decodedBytes);
+    }
+
 }

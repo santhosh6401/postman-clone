@@ -8,5 +8,6 @@ public class ProfileSignupRequest {
     private String lastName;
     private String email;
     private String password;
+    private String gitLabAccessToken;
 
 }

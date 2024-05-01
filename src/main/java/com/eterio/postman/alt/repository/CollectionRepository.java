@@ -8,5 +8,4 @@ import java.util.Optional;
 
 @Repository
 public interface CollectionRepository extends MongoRepository<CollectionEntity , String> {
-    Optional<CollectionEntity> findByCollectionIdAndWorkspaceId(String collectionId, String workspaceId);
 }
