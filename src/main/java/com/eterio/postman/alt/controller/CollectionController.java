@@ -10,7 +10,14 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.gitlab4j.api.GitLabApi;
+import org.gitlab4j.api.GitLabApiException;
+import org.gitlab4j.api.models.Project;
+import org.gitlab4j.api.models.RepositoryFile;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,6 +35,8 @@ public class CollectionController {
     private final CollectionService collectionService;
 
     private final GenerateAndValidateToken tokenUtils;
+
+
 
     @PostMapping
     public CollectionResponse createCollection(@RequestHeader String uniqueInteractionId,
@@ -101,15 +110,20 @@ public class CollectionController {
         }
 
         try {
-            // TODO ....
+
+            RepositoryFile repositoryFile = collectionService.importCollection(projectId , collectionId , version ,tokenUtils.decodeToken(clientToken).get("profileId").toString() ,uniqueInteractionId);
+
+            ByteArrayResource resource = new ByteArrayResource(repositoryFile.getContent().getBytes());
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + repositoryFile.getFileName() + "\"")
+                    .contentLength(resource.contentLength())
+                    .contentType(MediaType.APPLICATION_JSON).body(resource);
 
 
         } catch (Exception ex) {
             log.error("interactionId : [{}] :: errorMsg : {}", uniqueInteractionId, ex.getMessage());
             throw ex;
         }
-
-        return null;
     }
 
 }

@@ -68,7 +68,8 @@ public class HelperUtils {
 
 
     public String decode(String value){
-        return Base64.getDecoder().decode(value).toString();
+        byte[] decodedBytes = Base64.getDecoder().decode(value);
+        return new String(decodedBytes);
     }
 
 }

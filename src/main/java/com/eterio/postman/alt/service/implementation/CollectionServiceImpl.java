@@ -1,16 +1,22 @@
 package com.eterio.postman.alt.service.implementation;
 
 import com.eterio.postman.alt.model.entity.CollectionEntity;
+import com.eterio.postman.alt.model.entity.ProfileEntity;
+import com.eterio.postman.alt.model.entity.ProjectEntity;
 import com.eterio.postman.alt.model.request.collection.CollectionRequest;
 import com.eterio.postman.alt.model.response.CommonResponse;
 import com.eterio.postman.alt.model.response.collection.CollectionResponse;
 import com.eterio.postman.alt.repository.CollectionRepository;
+import com.eterio.postman.alt.repository.ProfileRepository;
+import com.eterio.postman.alt.repository.ProjectRepository;
 import com.eterio.postman.alt.service.CollectionService;
+import com.eterio.postman.alt.utils.GitLabIntegrationService;
 import com.eterio.postman.alt.utils.HelperUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.gitlab4j.api.GitLabApiException;
+import org.gitlab4j.api.models.RepositoryFile;
 import org.springframework.beans.BeanUtils;
-import org.springframework.core.io.ByteArrayResource;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -34,6 +40,55 @@ public class CollectionServiceImpl implements CollectionService {
     private final HelperUtils helperUtils;
 
     private final MongoTemplate mongoTemplate;
+
+    private final ProfileRepository profileRepository;
+
+    private final ProjectRepository projectRepository;
+
+    private final GitLabIntegrationService gitLabIntegrationService;
+
+    @Override
+    public RepositoryFile importCollection(String projectId, String collectionId, String version, String profileId, String uniqueInteractionId) throws GitLabApiException {
+
+
+        Query query = new Query();
+
+        if (Objects.nonNull(collectionId))
+            query.addCriteria(Criteria.where("collectionId").is(collectionId));
+
+        if (Objects.nonNull(version))
+            query.addCriteria(Criteria.where("version").is(version));
+
+        if (Objects.nonNull(projectId))
+            query.addCriteria(Criteria.where("projectId").is(projectId));
+
+
+        query.with(Sort.by(Sort.Order.desc("audit.createdDate")));
+
+        List<CollectionEntity> collectionEntities = mongoTemplate.find(query, CollectionEntity.class);
+
+        Optional<ProfileEntity> profileEntityOptional = profileRepository.findByProfileId(profileId);
+
+        Optional<ProjectEntity> projectEntityOptional = projectRepository.findByProjectId(projectId);
+
+        if (profileEntityOptional.isPresent() && collectionEntities.size() == 1 && projectEntityOptional.isPresent()) {
+
+            RepositoryFile repositoryFile = gitLabIntegrationService.getFile(projectEntityOptional.get().getGitProjectId(), helperUtils.decode(profileEntityOptional.get().getGitLabAccessToken()), collectionEntities.get(0).getFilepath());
+            if (Objects.nonNull(repositoryFile)) {
+                CollectionEntity collectionEntity = collectionEntities.get(0);
+                collectionEntity.setLastCommitId(repositoryFile.getLastCommitId());
+                return repositoryFile;
+            } else {
+                log.error("interactionId : [{}] git repo file is null", uniqueInteractionId);
+                return null;
+            }
+
+        } else {
+            log.error("interactionId : [{}] , project  not found || profile not found || collection not found or more than one record  ...", uniqueInteractionId);
+            return null;
+        }
+
+    }
 
     @Override
     public CollectionResponse createCollection(CollectionRequest request, String uniqueInteractionId, String profileId) {
@@ -100,13 +155,13 @@ public class CollectionServiceImpl implements CollectionService {
         } else {
             CollectionEntity entity = entityOptional.get();
 
-            if(Objects.nonNull(request.getName()))
+            if (Objects.nonNull(request.getName()))
                 entity.setName(request.getName());
-            if(Objects.nonNull(request.getFilepath()))
+            if (Objects.nonNull(request.getFilepath()))
                 entity.setFilepath(request.getFilepath());
-            if(Objects.nonNull(request.getVersion()))
+            if (Objects.nonNull(request.getVersion()))
                 entity.setVersion(request.getVersion());
-            if(Objects.nonNull(request.getProjectId()))
+            if (Objects.nonNull(request.getProjectId()))
                 entity.setProjectId(request.getProjectId());
 
             entity.setAudit(helperUtils.updateAudit(uniqueInteractionId, entity.getAudit()));
@@ -192,17 +247,4 @@ public class CollectionServiceImpl implements CollectionService {
     }
 
 
-    @Override
-    public ByteArrayResource importCollection(String uniqueInteractionId, String workspaceId, String collectionId) {
-
-        try {
-
-            // TODO :: Git Lab logic
-
-        } catch (Exception ex) {
-            log.error("interactionId : [{}] :: errorMsg : {} ", uniqueInteractionId, ex.getMessage());
-            throw ex;
-        }
-        return null;
-    }
 }
