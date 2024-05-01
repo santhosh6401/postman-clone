@@ -1,8 +1,8 @@
 package com.eterio.postman.alt.model.entity;
 
 import com.eterio.postman.alt.model.common.Audit;
+import com.eterio.postman.alt.model.common.IdName;
 import com.eterio.postman.alt.model.common.StatusLifeCycle;
-import com.eterio.postman.alt.model.common.workspace.IdName;
 import com.eterio.postman.alt.model.enums.workspace.WorkspaceStatus;
 import com.eterio.postman.alt.model.enums.workspace.WorkspaceType;
 import lombok.Data;

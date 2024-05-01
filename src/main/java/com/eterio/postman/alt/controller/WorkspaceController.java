@@ -11,12 +11,12 @@ import org.springframework.web.bind.annotation.*;
 @Api(tags = "Workspace API", value = "Workspace API")
 @Slf4j
 @RestController
-@RequestMapping("/workspace")
 @RequiredArgsConstructor
+@RequestMapping("/workspace")
 public class WorkspaceController {              // TODO client token validation ...
 
-
     private final WorkspaceService workspaceService;
+
 
     @PostMapping("/create")
     public WorkspaceCreateResponse createWorkspace(@RequestHeader String uniqueInteractionId,

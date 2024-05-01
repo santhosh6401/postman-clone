@@ -1,4 +1,4 @@
-package com.eterio.postman.alt.model.common.workspace;
+package com.eterio.postman.alt.model.common;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
