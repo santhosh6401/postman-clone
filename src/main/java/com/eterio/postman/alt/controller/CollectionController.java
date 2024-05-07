@@ -14,6 +14,7 @@ import org.gitlab4j.api.GitLabApi;
 import org.gitlab4j.api.GitLabApiException;
 import org.gitlab4j.api.models.Project;
 import org.gitlab4j.api.models.RepositoryFile;
+import org.gitlab4j.api.models.TreeItem;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
@@ -124,6 +125,33 @@ public class CollectionController {
             log.error("interactionId : [{}] :: errorMsg : {}", uniqueInteractionId, ex.getMessage());
             throw ex;
         }
+    }
+
+    @GetMapping("/folders")
+    public List<TreeItem> getFolders(
+            @RequestHeader String uniqueInteractionId,
+            @RequestParam String type ,
+            @RequestParam(required = false, value = "file-path", name = "file-path") @ApiParam(name = "file-path") String filePath) throws Exception {
+
+        return collectionService.getFolders(filePath , type ,  uniqueInteractionId);
+    }
+
+    @GetMapping("/file")
+    public ResponseEntity<Resource> getFile(
+            @RequestHeader String uniqueInteractionId,
+            @RequestParam(required = false, value = "file-path", name = "file-path") @ApiParam(name = "file-path") String filePath) throws Exception {
+
+        RepositoryFile repositoryFile = collectionService.getFile(filePath , uniqueInteractionId);
+
+        if(Objects.nonNull(repositoryFile)){
+            ByteArrayResource resource = new ByteArrayResource(repositoryFile.getContent().getBytes());
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + repositoryFile.getFileName() + "\"")
+                    .contentLength(resource.contentLength())
+                    .contentType(MediaType.APPLICATION_JSON).body(resource);
+        }
+
+        return null;
     }
 
 }

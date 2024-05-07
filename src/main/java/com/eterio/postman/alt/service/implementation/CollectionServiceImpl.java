@@ -16,17 +16,20 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.gitlab4j.api.GitLabApiException;
 import org.gitlab4j.api.models.RepositoryFile;
+import org.gitlab4j.api.models.TreeItem;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ObjectUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static com.eterio.postman.alt.constant.AppConstant.SUCCESS;
 import static javax.management.remote.JMXConnectionNotification.FAILED;
@@ -244,6 +247,39 @@ public class CollectionServiceImpl implements CollectionService {
         }
 
         return collectionResponses;
+    }
+
+    @Override
+    public List<TreeItem> getFolders(String filePath, String type, String interactionId) throws GitLabApiException {
+        log.info("interactionId :: [{}] , get folders from gitLab ", interactionId);
+
+        try {
+
+            List<TreeItem> treeItems = gitLabIntegrationService.getFolderStructure(filePath);
+
+            TreeItem.Type treeType = type.equalsIgnoreCase("FOLDER") ? TreeItem.Type.TREE : TreeItem.Type.BLOB;
+
+            treeItems = treeItems.stream().filter(treeItem -> treeItem.getType().equals(treeType)).collect(Collectors.toList());
+
+            return !ObjectUtils.isEmpty(treeItems) ? treeItems : new ArrayList<>();
+
+        } catch (Exception e) {
+            log.error("interactionId : [{}] errorMsg : {} ", interactionId, e.getMessage());
+            throw e;
+        }
+    }
+
+    @Override
+    public RepositoryFile getFile(String filePath, String uniqueInteractionId) throws GitLabApiException {
+        log.info("interactionId :: [{}] , get folders from gitLab ", uniqueInteractionId);
+
+        try {
+
+            return gitLabIntegrationService.getFile(filePath);
+        } catch (Exception e) {
+            log.error("interactionId : [{}] errorMsg : {} ", uniqueInteractionId, e.getMessage());
+            throw e;
+        }
     }
 
 
